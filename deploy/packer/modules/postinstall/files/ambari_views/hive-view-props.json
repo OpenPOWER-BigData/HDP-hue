@@ -1,0 +1,15 @@
+[ {
+"ViewInstanceInfo" : {
+	"description": "User Interface to write and execute SQL scripts. It also helps lookup all SQL queries run through Hive in the cluster. Tez View integrates into this view. ",
+    "properties" : {
+	"webhdfs.url" : "hdfs://sandbox.hortonworks.com:8020",
+	"webhcat.url" : "http://sandbox.hortonworks.com:50111/templeton/v1",
+	"scripts.dir" : "/tmp/.hivequeries",
+	"jobs.dir" : "/tmp/.hivejobs",
+	"hive.host": "sandbox.hortonworks.com",
+	"hive.port": "10000",
+	"hive.auth": "auth=NONE",
+	"yarn.ats.url": "http://sandbox.hortonworks.com:8188"
+    }
+  }
+} ]

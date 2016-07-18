@@ -1,0 +1,79 @@
+1) $ visudo
+requiretty => !requiretty
+
+2) disable tty1 (/etc/sysconfig/init)
+
+to /etc/init/start-ttys.conf add after for-loop:
+
+	initctl start tty-splash TTY=tty1
+
+create /etc/init/tty-splash.conf:
+
+	stop on runlevel [S016]
+
+	respawn
+	instance $TTY
+	exec /sbin/mingetty --autologin root --noclear $TTY
+
+add to ~/.bashrc:
+	[ $(tty) = "/dev/tty1" ] && python /usr/lib/hue/tools/start_scripts/splash.py
+
+
+3) pip install sh (in global env)
+
+4) httpd to landing page:
+
+# Proxy to tutorials
+ProxyPass /ganglia !
+ProxyPass /nagios !
+ProxyPass / http://127.0.0.1:8888/
+ProxyPassReverse / http://127.0.0.1:8888/
+
+
+5) python2.7, libs
+http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/
+
+6) remove most of *-devel. list with:
+yum list installed | grep devel
+
+rm -rf /var/cache/yum
+
+7) iptables, cups disable
+
+8) /etc/issue add
+login: root
+password: hadoop
+
+9) rm /etc/udev/rules.d/70-persistent-net.rules
+mkdir /etc/udev/rules.d/70-persistent-net.rules
+
+$ vim /etc/sysconfig/network-scripts/ifcfg-eth0
+$ vim /etc/sysconfig/network-scripts/ifcfg-eth1
+
+remove UUID and HWADDR entries
+
+10) cd /usr/lib/sandbox-shared && sudo -u sandbox git stash
+    cd /usr/lib/sandbox-tutorials && sudo -u sandbox git stash
+
+11) chown tutorials and shared with
+chown sandbox:sandbox -R /usr/lib/sandbox-shared
+chown sandbox:sandbox -R /usr/lib/sandbox-tutorials
+
+12) 2GB RAM
+VBoxManage modifyvm "SandboxBimiotaRC8v.2" --memory 2048 --cpus 2
+
+13) Disable console screensaver:
+add consoleblank=0 to kernel parameters in /boot/grub/grub.conf
+remove rhgb
+
+14) Setup network & DNS:
+add nameserver 8.8.8.8 to /etc/resolv.conf
+edit /etc/sysconfig/network-scripts/ifcfg-eth0 &ifcfg-eth1
+change  PEERDNS=no
+
+15) su - hdfs -c "hadoop fs -chown sandbox /tmp/hue-uploads"
+16) su - hdfs -c "hadoop fs -rmr -skipTrash /user/ambari_qa/.staging/"
+
+#17) setcap 'cap_net_bind_service=+ep' /usr/lib/tutorials/.env/bin/python
+
+18) remove tutorials/registration_log

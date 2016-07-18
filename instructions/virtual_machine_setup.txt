@@ -1,0 +1,4 @@
+1) Download and install latest Vagrant (http://downloads.vagrantup.com/)
+2) git clone -b Caterpillar git@github.com:hortonworks/sandbox-shared.git && cd sandbox-shared/deploy/vagrant
+3) vagrant up (first time it would take some time to build VM).
+4) To connect to running VM simply run vagrant ssh

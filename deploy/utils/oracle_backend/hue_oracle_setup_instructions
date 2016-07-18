@@ -1,0 +1,29 @@
+To configure Hue to store data in Oracle database:
+
+1. Create a new user in Oracle DB and grant privileges to it to manage this database:
+
+SQL> CREATE USER hue IDENTIFIED BY huepassword DEFAULT TABLESPACE "USERS" TEMPORARY TABLESPACE "TEMP";
+SQL> GRANT CREATE TABLE, CREATE SEQUENCE, CREATE PROCEDURE, CREATE TRIGGER, CREATE SESSION, UNLIMITED TABLESPACE TO hue;
+
+If we run tests, then do the following:
+
+SQL> GRANT CREATE USER, DROP USER, CREATE TABLESPACE, DROP TABLESPACE TO hue;
+SQL> GRANT CONNECT, RESOURCE TO hue WITH ADMIN OPTION;
+
+2. Open the /etc/hue/hue.ini file in a text editor. Directly below the [[database]] line, add the following options (and modify accordingly for your Oracle DB setup). e.g:
+
+    host=10.2.2.114
+    port=1521
+    engine=oracle
+    user=hue
+    password=huepassword
+    name=orcl
+
+Where 'name' is a SID value your Oracle database. To get this use the following command:
+SQL> select instance from v$thread;
+
+3. Download setup_oracle_backend.sh script and execute it:
+cd YOUR_DOWNLOAD_DIR
+bash setup_oracle_backend.sh
+
+At the end the Oracle database is provisioned, ready to be used by Hue, service Hue is restarted.

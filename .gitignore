@@ -1,0 +1,44 @@
+*.log
+*.pot
+*.pyc
+*.py[cod]
+
+# C extensions
+*.so
+
+# Translations
+*.mo
+
+#emacs temp files
+*~
+\#*\#
+.\#*
+*_flymake.py
+
+.idea
+
+.vagrant
+exported_machines
+#virtualenv
+build/
+*.egg
+app.reg
+desktop.db
+tutorials/tutorials_app/db/db_version.txt
+
+.env/
+local_settings.py
+tutorials/tutorials_app/run/git_files/
+dependency-reduced-pom.xml
+
+*.ova
+*.vhd
+*.vmdk
+*.zip
+aws_credentials.json
+deploy/vagrant/hyper-v/key
+
+sftp-config.json
+
+
+*.box

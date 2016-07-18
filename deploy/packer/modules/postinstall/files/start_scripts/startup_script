@@ -1,0 +1,100 @@
+#!/bin/bash
+# startup script
+# chkconfig: 345 89 1
+### BEGIN INIT INFO
+# provides: Startup_Script
+# Required-Start:
+# Required-Stop:
+# Default-Start: 3 4 5
+# Default-Stop: 0 1 6
+# Description: startup script
+### END INIT INFO
+
+
+NAME="startup_script"
+LOG="/var/log/startup_script.log"
+SCRIPTS_PATH="/usr/lib/hue/tools/start_scripts"
+
+PATH="/sbin:/usr/sbin:/bin:/usr/bin"
+export PATH
+
+source $SCRIPTS_PATH/consts.sh
+
+function restart() {
+    date >> $LOG
+    [ "$1" == "-r" ] && str="Stopping HDP..." || str="Starting HDP..."
+    printf "%-70s\n" "$str" | tee -a $LOG
+    bash $SCRIPTS_PATH/stop.sh >> $LOG 2>&1
+
+    [ "$1" == "-r" ] && printf "%-70s\n" "Starting HDP..." | tee -a $LOG
+    bash $SCRIPTS_PATH/start.sh >> $LOG 2>&1
+}
+
+
+case "$1" in
+start)
+    printf "%-50s\n" "Starting $NAME..." | tee -a $LOG
+
+    rm -f /var/run/hadoop-yarn/yarn/* && rm -f /var/run/hadoop-mapred/mapred/*
+
+    echo "" > /etc/resolv.conf
+    # ethtool -K eth0 tso off
+    # ethtool -K eth1 tso off
+    dhclient &
+
+    /etc/init.d/mysqld start >> $LOG  #To make run.sh work (tutorials update)
+
+    #bash $SCRIPTS_PATH/sandbox_component_versions.sh
+
+    printf "%-50s\n" "Updating IP..." | tee -a $LOG
+    bash $SCRIPTS_PATH/gen_hosts.sh
+   
+    sed -i 1i"nameserver 8.8.8.8" /etc/resolv.conf
+
+    if [ -d /usr/lib/sandbox-shared ]; then
+        printf "%-50s\n" "Updating sandbox..." | tee -a $LOG
+        cd /usr/lib/sandbox-shared
+
+        sudo -u hue git fetch >> /var/log/startup_script.log 2>&1
+        sudo -u hue git checkout $BRANCH >> /var/log/startup_script.log 2>&1
+        sudo -u hue git stash  >> /var/log/startup_script.log 2>&1
+        pull_res=$(sudo -u hue git pull origin $BRANCH 2>> $LOG)
+        echo $pull_res >> $LOG
+
+        chown hue:hadoop -R /usr/lib/sandbox-shared
+        [ ! "$pull_res" = "Already up-to-date." ] && /usr/lib/hue/build/env/bin/hue migrate  >> $LOG 2>&1
+    fi
+    
+    echo "Starting HDP ..."
+    cp -f /etc/knox/sandbox.xml.provided /etc/knox/conf/topologies/sandbox.xml # knox topology setup
+    make --makefile $SCRIPTS_PATH/start_deps.mf -B Startup -j -i
+
+    sudo -u hdfs /usr/hdp/current/hadoop-hdfs-client/bin/hdfs dfsadmin -safemode leave
+
+    mkdir -p /var/log/hadoop/hue
+    touch /var/log/hadoop/hue/hadoop.log # pig access error workaround
+    chown hue:hadoop -Rf /var/log/hadoop/hue/
+    
+    printf "%-50s\n" "Starting sandbox..." | tee -a $LOG
+    
+    echo 0 > /proc/sys/kernel/hung_task_timeout_secs
+
+    
+    stty -F /dev/tty1 -echo
+    # drop caches (minimize swapping)
+    sync && echo 3 > /proc/sys/vm/drop_caches && echo 0 > /proc/sys/vm/drop_caches
+;;
+stop)
+    date >> $LOG
+    bash $SCRIPTS_PATH/stop.sh >> $LOG 2>&1
+;;
+
+restart)
+    $0 stop
+    $0 start
+;;
+
+*)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
